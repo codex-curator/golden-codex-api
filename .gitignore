@@ -1,0 +1,45 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Environment
+.env
+.env.local
+.env.*.local
+*.env
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+*.log
+*.tmp
+coverage/
+.coverage
+htmlcov/
+
+# Package locks (keep in monorepo)
+# package-lock.json
+# yarn.lock
+
+# Secrets (NEVER commit)
+*.pem
+*.key
+secrets/
+credentials.json

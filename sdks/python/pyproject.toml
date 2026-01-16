@@ -1,0 +1,78 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "golden-codex"
+version = "1.0.0"
+description = "Official Python SDK for the Golden Codex API - AI-powered image enrichment and provenance tracking"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.9"
+authors = [
+    { name = "Metavolve Labs", email = "api@golden-codex.com" }
+]
+keywords = [
+    "golden-codex",
+    "ai",
+    "image-processing",
+    "metadata",
+    "provenance",
+    "art",
+    "nft",
+    "upscaling"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Multimedia :: Graphics",
+    "Typing :: Typed",
+]
+dependencies = [
+    "httpx>=0.25.0",
+    "typing-extensions>=4.0.0;python_version<'3.11'",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-asyncio>=0.21",
+    "pytest-cov>=4.0",
+    "mypy>=1.0",
+    "ruff>=0.1",
+    "respx>=0.20",
+]
+
+[project.urls]
+Homepage = "https://golden-codex.com"
+Documentation = "https://golden-codex.com/docs/api"
+Repository = "https://github.com/codex-curator/golden-codex-api"
+Issues = "https://github.com/codex-curator/golden-codex-api/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["golden_codex"]
+
+[tool.mypy]
+python_version = "3.9"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+
+[tool.ruff]
+target-version = "py39"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP", "B", "C4", "SIM"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
