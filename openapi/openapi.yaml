@@ -1,0 +1,832 @@
+openapi: 3.0.3
+info:
+  title: Golden Codex API
+  version: 1.0.0
+  description: |
+    AI-powered image enrichment and provenance tracking.
+
+    Golden Codex transforms your images into museum-grade digital artifacts with:
+    - AI metadata enrichment (50+ fields)
+    - 4K ESRGAN upscaling
+    - Metadata infusion (XMP/EXIF)
+
+    ## Authentication
+
+    All requests require an API key in the Authorization header:
+    ```
+    Authorization: Bearer gcx_live_your_key_here
+    ```
+
+    Get your API key at [golden-codex.com/dashboard](https://golden-codex.com/dashboard)
+
+  contact:
+    name: Golden Codex Support
+    email: api@golden-codex.com
+    url: https://golden-codex.com/help
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.golden-codex.com/v1
+    description: Production
+  - url: https://api-sandbox.golden-codex.com/v1
+    description: Sandbox (test mode)
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Jobs
+    description: Create and manage enhancement jobs
+  - name: Account
+    description: Account information and usage
+  - name: Webhooks
+    description: Webhook subscription management
+  - name: Utilities
+    description: Cost estimation and health checks
+
+paths:
+  /health:
+    get:
+      operationId: healthCheck
+      summary: Health check
+      description: Check if the API is operational
+      tags: [Utilities]
+      security: []
+      responses:
+        '200':
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: healthy
+                  version:
+                    type: string
+                    example: "1.0.0"
+
+  /jobs:
+    post:
+      operationId: createJob
+      summary: Create enhancement job
+      description: |
+        Create a new image enhancement job.
+
+        The job runs asynchronously. Poll the status endpoint or use webhooks
+        to be notified when complete.
+      tags: [Jobs]
+      parameters:
+        - name: X-Request-ID
+          in: header
+          description: Unique request ID for idempotency
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateJobRequest'
+            examples:
+              full_pipeline:
+                summary: Full pipeline
+                value:
+                  image_url: "https://example.com/artwork.jpg"
+                  operations: ["nova", "flux", "atlas"]
+                  options:
+                    nova:
+                      tier: "full_gcx"
+                    flux:
+                      model: "4x"
+              metadata_only:
+                summary: Metadata only
+                value:
+                  image_url: "https://example.com/artwork.jpg"
+                  operations: ["nova", "atlas"]
+      responses:
+        '202':
+          description: Job created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateJobResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+        '402':
+          $ref: '#/components/responses/InsufficientCreditsError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+
+    get:
+      operationId: listJobs
+      summary: List jobs
+      description: List your jobs with pagination and filtering
+      tags: [Jobs]
+      parameters:
+        - name: limit
+          in: query
+          description: Maximum number of jobs to return
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          description: Number of jobs to skip
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: status
+          in: query
+          description: Filter by status
+          schema:
+            $ref: '#/components/schemas/JobStatus'
+      responses:
+        '200':
+          description: List of jobs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListJobsResponse'
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+
+  /jobs/{job_id}:
+    get:
+      operationId: getJob
+      summary: Get job
+      description: Get the status and results of a job
+      tags: [Jobs]
+      parameters:
+        - $ref: '#/components/parameters/JobId'
+      responses:
+        '200':
+          description: Job details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Job'
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+    delete:
+      operationId: cancelJob
+      summary: Cancel job
+      description: Cancel a pending job. Cannot cancel jobs already processing.
+      tags: [Jobs]
+      parameters:
+        - $ref: '#/components/parameters/JobId'
+      responses:
+        '204':
+          description: Job cancelled
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /estimate:
+    post:
+      operationId: estimateCost
+      summary: Estimate cost
+      description: Calculate the cost of operations before creating a job
+      tags: [Utilities]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                operations:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Operation'
+                  default: ["nova", "flux", "atlas"]
+                options:
+                  $ref: '#/components/schemas/OperationOptions'
+      responses:
+        '200':
+          description: Cost estimate
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CostEstimate'
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+
+  /account:
+    get:
+      operationId: getAccount
+      summary: Get account
+      description: Get current account information and balance
+      tags: [Account]
+      responses:
+        '200':
+          description: Account information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+
+  /account/usage:
+    get:
+      operationId: getUsage
+      summary: Get usage statistics
+      description: Get usage statistics for the last 30 days
+      tags: [Account]
+      responses:
+        '200':
+          description: Usage statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsageStats'
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+
+  /webhooks:
+    post:
+      operationId: createWebhook
+      summary: Create webhook
+      description: |
+        Create a new webhook subscription.
+
+        **Important**: The signing secret is only returned once at creation time.
+        Store it securely!
+      tags: [Webhooks]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWebhookRequest'
+      responses:
+        '201':
+          description: Webhook created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateWebhookResponse'
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+
+    get:
+      operationId: listWebhooks
+      summary: List webhooks
+      description: List your webhook subscriptions
+      tags: [Webhooks]
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of webhooks
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListWebhooksResponse'
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+
+  /webhooks/{webhook_id}:
+    get:
+      operationId: getWebhook
+      summary: Get webhook
+      tags: [Webhooks]
+      parameters:
+        - $ref: '#/components/parameters/WebhookId'
+      responses:
+        '200':
+          description: Webhook details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Webhook'
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+    patch:
+      operationId: updateWebhook
+      summary: Update webhook
+      tags: [Webhooks]
+      parameters:
+        - $ref: '#/components/parameters/WebhookId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                events:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/WebhookEvent'
+                active:
+                  type: boolean
+      responses:
+        '200':
+          description: Webhook updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Webhook'
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+    delete:
+      operationId: deleteWebhook
+      summary: Delete webhook
+      tags: [Webhooks]
+      parameters:
+        - $ref: '#/components/parameters/WebhookId'
+      responses:
+        '204':
+          description: Webhook deleted
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /webhooks/{webhook_id}/rotate-secret:
+    post:
+      operationId: rotateWebhookSecret
+      summary: Rotate webhook secret
+      description: Generate a new signing secret for the webhook
+      tags: [Webhooks]
+      parameters:
+        - $ref: '#/components/parameters/WebhookId'
+      responses:
+        '200':
+          description: New secret
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  secret:
+                    type: string
+                    description: New signing secret
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: API Key
+      description: "Use your API key: Bearer gcx_live_xxx"
+
+  parameters:
+    JobId:
+      name: job_id
+      in: path
+      required: true
+      description: Job identifier
+      schema:
+        type: string
+        example: job_7f3d8a2b1c4e
+
+    WebhookId:
+      name: webhook_id
+      in: path
+      required: true
+      description: Webhook identifier
+      schema:
+        type: string
+        example: wh_abc123
+
+  schemas:
+    Operation:
+      type: string
+      enum: [nova, flux, atlas]
+      description: |
+        Enhancement operation:
+        - `nova` - AI metadata generation
+        - `flux` - ESRGAN upscaling
+        - `atlas` - Metadata infusion
+
+    JobStatus:
+      type: string
+      enum: [pending, processing, completed, failed, cancelled]
+
+    WebhookEvent:
+      type: string
+      enum: [job.completed, job.failed, job.cancelled]
+
+    OperationOptions:
+      type: object
+      properties:
+        nova:
+          type: object
+          properties:
+            tier:
+              type: string
+              enum: [standard, full_gcx]
+              default: standard
+              description: Analysis tier
+            language:
+              type: string
+              default: en
+              description: Language for generated text
+        flux:
+          type: object
+          properties:
+            model:
+              type: string
+              enum: ['2x', '4x', anime, photo]
+              default: '4x'
+              description: Upscaling model
+        atlas:
+          type: object
+          properties:
+            format:
+              type: string
+              enum: [png, jpg, webp]
+              default: png
+              description: Output format
+
+    CreateJobRequest:
+      type: object
+      required:
+        - image_url
+      properties:
+        image_url:
+          type: string
+          format: uri
+          description: URL of image to process
+        operations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Operation'
+          default: [nova, flux, atlas]
+        options:
+          $ref: '#/components/schemas/OperationOptions'
+        webhook_url:
+          type: string
+          format: uri
+          description: URL for completion notifications
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Custom metadata (returned in results)
+
+    CreateJobResponse:
+      type: object
+      properties:
+        job_id:
+          type: string
+          example: job_7f3d8a2b1c4e
+        status:
+          $ref: '#/components/schemas/JobStatus'
+        operations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Operation'
+        cost:
+          type: object
+          properties:
+            estimated_aet:
+              type: integer
+              example: 5
+        created_at:
+          type: string
+          format: date-time
+        links:
+          type: object
+          properties:
+            self:
+              type: string
+            cancel:
+              type: string
+
+    Job:
+      type: object
+      properties:
+        job_id:
+          type: string
+        status:
+          $ref: '#/components/schemas/JobStatus'
+        operations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Operation'
+        progress:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/JobStatus'
+        results:
+          type: object
+          properties:
+            golden_codex:
+              type: object
+              description: AI-generated metadata
+            urls:
+              type: object
+              properties:
+                original:
+                  type: string
+                  format: uri
+                upscaled:
+                  type: string
+                  format: uri
+                final:
+                  type: string
+                  format: uri
+        error:
+          $ref: '#/components/schemas/ErrorDetails'
+        cost:
+          type: object
+          properties:
+            estimated_aet:
+              type: integer
+            charged_aet:
+              type: integer
+        created_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+        client_metadata:
+          type: object
+
+    ListJobsResponse:
+      type: object
+      properties:
+        jobs:
+          type: array
+          items:
+            $ref: '#/components/schemas/Job'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    CostEstimate:
+      type: object
+      properties:
+        estimated_aet:
+          type: integer
+        breakdown:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              cost:
+                type: integer
+        current_balance:
+          type: integer
+        sufficient_balance:
+          type: boolean
+
+    Account:
+      type: object
+      properties:
+        user_id:
+          type: string
+        email:
+          type: string
+          format: email
+        tier:
+          type: string
+          enum: [FREE_TRIAL, CURATOR, STUDIO, GALLERY]
+        balance:
+          type: object
+          properties:
+            aet:
+              type: integer
+            storage_used_bytes:
+              type: integer
+            storage_limit_bytes:
+              type: integer
+        rate_limit:
+          type: object
+          properties:
+            requests_per_minute:
+              type: integer
+
+    UsageStats:
+      type: object
+      properties:
+        period_start:
+          type: string
+          format: date-time
+        period_end:
+          type: string
+          format: date-time
+        jobs_created:
+          type: integer
+        jobs_by_status:
+          type: object
+          properties:
+            completed:
+              type: integer
+            failed:
+              type: integer
+            cancelled:
+              type: integer
+        aet_spent:
+          type: integer
+
+    CreateWebhookRequest:
+      type: object
+      required:
+        - url
+      properties:
+        url:
+          type: string
+          format: uri
+          description: HTTPS URL for webhook delivery
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/WebhookEvent'
+          default: [job.completed, job.failed]
+
+    CreateWebhookResponse:
+      type: object
+      properties:
+        webhook_id:
+          type: string
+        url:
+          type: string
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/WebhookEvent'
+        secret:
+          type: string
+          description: Signing secret (only shown once!)
+        created_at:
+          type: string
+          format: date-time
+
+    Webhook:
+      type: object
+      properties:
+        webhook_id:
+          type: string
+        url:
+          type: string
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/WebhookEvent'
+        active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        last_success_at:
+          type: string
+          format: date-time
+        consecutive_failures:
+          type: integer
+
+    ListWebhooksResponse:
+      type: object
+      properties:
+        webhooks:
+          type: array
+          items:
+            $ref: '#/components/schemas/Webhook'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    Pagination:
+      type: object
+      properties:
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    ErrorDetails:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        stage:
+          $ref: '#/components/schemas/Operation'
+
+    Error:
+      type: object
+      properties:
+        error:
+          $ref: '#/components/schemas/ErrorDetails'
+
+  responses:
+    AuthenticationError:
+      description: Authentication failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: invalid_api_key
+              message: API key is invalid or has been revoked
+
+    InsufficientCreditsError:
+      description: Insufficient credits
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/Error'
+              - type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      balance:
+                        type: integer
+                      required:
+                        type: integer
+          example:
+            error:
+              code: insufficient_credits
+              message: Account has 3 AET but operation requires 5 AET
+              balance: 3
+              required: 5
+
+    RateLimitError:
+      description: Rate limit exceeded
+      headers:
+        X-RateLimit-Limit:
+          schema:
+            type: integer
+        X-RateLimit-Remaining:
+          schema:
+            type: integer
+        X-RateLimit-Reset:
+          schema:
+            type: integer
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/Error'
+              - type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      retry_after:
+                        type: integer
+          example:
+            error:
+              code: rate_limited
+              message: Rate limit exceeded. 100 requests per minute allowed.
+              retry_after: 45
+
+    ValidationError:
+      description: Validation failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: missing_field
+              message: image_url is required
+
+    NotFoundError:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: job_not_found
+              message: Job job_abc123 not found

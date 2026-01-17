@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Getting Started - Golden Codex API</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #7C3AED;
+            --primary-dark: #5B21B6;
+            --bg: #0F0F0F;
+            --bg-card: #1A1A1A;
+            --bg-code: #1E1E1E;
+            --text: #FAFAFA;
+            --text-muted: #A1A1AA;
+            --border: #27272A;
+            --success: #22C55E;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+        }
+
+        a { color: var(--primary); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--bg-code);
+            padding: 0.2em 0.4em;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.25rem;
+            overflow-x: auto;
+            margin: 1.5rem 0;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+        }
+
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(15, 15, 15, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            z-index: 100;
+        }
+
+        .header-inner {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .logo svg { width: 28px; height: 28px; }
+
+        .nav { display: flex; gap: 1.5rem; }
+        .nav a { color: var(--text-muted); font-weight: 500; }
+        .nav a:hover { color: var(--text); text-decoration: none; }
+
+        .content {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 7rem 2rem 4rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--text) 0%, var(--primary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
+
+        h3 {
+            font-size: 1.2rem;
+            margin: 2rem 0 0.75rem;
+        }
+
+        p { margin: 1rem 0; color: var(--text-muted); }
+        p strong { color: var(--text); }
+
+        ul, ol {
+            margin: 1rem 0;
+            padding-left: 1.5rem;
+            color: var(--text-muted);
+        }
+
+        li { margin: 0.5rem 0; }
+
+        .step {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .step-number {
+            width: 32px;
+            height: 32px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+
+        .step-content { flex: 1; }
+        .step-content h3 { margin-top: 0; }
+
+        .callout {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--primary);
+            border-radius: 8px;
+            padding: 1rem 1.25rem;
+            margin: 1.5rem 0;
+        }
+
+        .callout-warning {
+            border-left-color: #F59E0B;
+        }
+
+        .callout strong {
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+        }
+
+        th, td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background: var(--bg-card);
+            font-weight: 600;
+        }
+
+        .footer {
+            border-top: 1px solid var(--border);
+            padding: 2rem;
+            text-align: center;
+            color: var(--text-muted);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: var(--primary);
+            color: white;
+            border-radius: 8px;
+            font-weight: 600;
+            margin-top: 1rem;
+        }
+
+        .btn:hover { background: var(--primary-dark); text-decoration: none; }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-inner">
+            <a href="../" class="logo">
+                <svg viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="url(#g)"/><path d="M16 6L22 10V22L16 26L10 22V10L16 6Z" stroke="white" stroke-width="2" fill="none"/><circle cx="16" cy="16" r="4" fill="white"/><defs><linearGradient id="g" x1="0" y1="0" x2="32" y2="32"><stop stop-color="#7C3AED"/><stop offset="1" stop-color="#5B21B6"/></linearGradient></defs></svg>
+                Golden Codex API
+            </a>
+            <nav class="nav">
+                <a href="../">Home</a>
+                <a href="../api-reference/">API Reference</a>
+                <a href="https://github.com/codex-curator/golden-codex-api">GitHub</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="content">
+        <h1>Getting Started</h1>
+        <p>Get up and running with the Golden Codex API in under 5 minutes.</p>
+
+        <div class="step">
+            <div class="step-number">1</div>
+            <div class="step-content">
+                <h3>Get Your API Key</h3>
+                <ol>
+                    <li>Sign up at <a href="https://golden-codex.com/signup">golden-codex.com</a></li>
+                    <li>Navigate to <strong>Dashboard</strong> &rarr; <strong>API Keys</strong></li>
+                    <li>Click <strong>Create New Key</strong></li>
+                    <li>Copy the key immediately - it won't be shown again!</li>
+                </ol>
+                <p>Your API key looks like: <code>gcx_live_Abc123XyzDef456...</code></p>
+                <div class="callout callout-warning">
+                    <strong>Security Note</strong>
+                    Never commit API keys to version control. Use environment variables instead.
+                </div>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-number">2</div>
+            <div class="step-content">
+                <h3>Install an SDK</h3>
+                <p><strong>Node.js</strong></p>
+                <pre><code>npm install @golden-codex/sdk</code></pre>
+                <p><strong>Python</strong></p>
+                <pre><code>pip install golden-codex</code></pre>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-number">3</div>
+            <div class="step-content">
+                <h3>Process Your First Image</h3>
+                <p><strong>Node.js</strong></p>
+                <pre><code>import { GoldenCodex } from '@golden-codex/sdk';
+
+const gcx = new GoldenCodex({
+  apiKey: process.env.GOLDEN_CODEX_API_KEY
+});
+
+// Create a job
+const job = await gcx.jobs.create({
+  imageUrl: 'https://example.com/artwork.jpg',
+  operations: ['nova', 'flux', 'atlas']
+});
+
+console.log(`Job created: ${job.jobId}`);
+
+// Wait for completion
+const result = await gcx.jobs.wait(job.jobId);
+
+console.log('AI Title:', result.results.goldenCodex.title);
+console.log('Final URL:', result.results.urls.final);</code></pre>
+
+                <p><strong>Python</strong></p>
+                <pre><code>from golden_codex import GoldenCodex
+import os
+
+gcx = GoldenCodex(api_key=os.environ["GOLDEN_CODEX_API_KEY"])
+
+# Create a job
+job = gcx.jobs.create(
+    image_url="https://example.com/artwork.jpg",
+    operations=["nova", "flux", "atlas"]
+)
+
+print(f"Job created: {job['job_id']}")
+
+# Wait for completion
+result = gcx.jobs.wait(job["job_id"])
+
+print("AI Title:", result["results"]["golden_codex"]["title"])
+print("Final URL:", result["results"]["urls"]["final"])</code></pre>
+            </div>
+        </div>
+
+        <h2>Understanding Operations</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Operation</th>
+                    <th>What It Does</th>
+                    <th>Cost</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>nova</code></td>
+                    <td>AI analyzes image and generates 50+ metadata fields</td>
+                    <td>1-2 AET</td>
+                </tr>
+                <tr>
+                    <td><code>flux</code></td>
+                    <td>Upscales image 2-4x using ESRGAN</td>
+                    <td>1-2 AET</td>
+                </tr>
+                <tr>
+                    <td><code>atlas</code></td>
+                    <td>Embeds metadata into image file (XMP/EXIF)</td>
+                    <td>1 AET</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p>You can run any combination of operations:</p>
+        <pre><code>// Just metadata, no upscaling
+await gcx.jobs.create({
+  imageUrl: '...',
+  operations: ['nova', 'atlas']
+});
+
+// Just upscaling, no metadata
+await gcx.jobs.create({
+  imageUrl: '...',
+  operations: ['flux']
+});</code></pre>
+
+        <h2>Next Steps</h2>
+        <ul>
+            <li><a href="../api-reference/">API Reference</a> - Full endpoint documentation</li>
+            <li><a href="https://github.com/codex-curator/golden-codex-api/tree/master/sdks">SDK Source Code</a> - View the SDK implementations</li>
+            <li><a href="https://github.com/codex-curator/golden-codex-api/tree/master/examples">Examples</a> - Integration examples</li>
+        </ul>
+
+        <a href="../api-reference/" class="btn">Explore the API &rarr;</a>
+    </main>
+
+    <footer class="footer">
+        <p>&copy; 2026 Metavolve Labs, Inc. All rights reserved.</p>
+    </footer>
+</body>
+</html>
