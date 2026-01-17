@@ -9,8 +9,8 @@ export type Operation = 'nova' | 'flux' | 'atlas';
 
 /**
  * Nova AI analysis tier
- * - standard: Basic metadata generation (1 AET)
- * - full_gcx: Museum-grade 50+ field analysis (2 AET)
+ * - standard: Basic metadata generation (1 GCX)
+ * - full_gcx: Museum-grade 50+ field analysis (2 GCX)
  */
 export type NovaTier = 'standard' | 'full_gcx';
 
@@ -164,11 +164,11 @@ export interface JobResults {
  * Cost breakdown for a job
  */
 export interface JobCost {
-  /** Estimated cost in AET */
-  estimatedAet: number;
+  /** Estimated cost in GCX */
+  estimatedGcx: number;
 
-  /** Actual charged cost in AET (after completion) */
-  chargedAet?: number;
+  /** Actual charged cost in GCX (after completion) */
+  chargedGcx?: number;
 
   /** Refunded amount (if job failed) */
   refundedAet?: number;
@@ -178,8 +178,8 @@ export interface JobCost {
  * Cost estimate response
  */
 export interface CostEstimate {
-  /** Total estimated cost in AET */
-  estimatedAet: number;
+  /** Total estimated cost in GCX */
+  estimatedGcx: number;
 
   /** Breakdown by operation */
   breakdown: {

@@ -118,7 +118,7 @@ gcx.jobs.cancel("job_abc123")
 ```python
 # Get account info
 account = gcx.account.get()
-print(f"Balance: {account['balance']['aet']} AET")
+print(f"Balance: {account['balance']['gcx']} GCX")
 print(f"Tier: {account['tier']}")
 
 # Get usage statistics
@@ -134,7 +134,7 @@ estimate = gcx.estimate(
     options={"nova": {"tier": "full_gcx"}}
 )
 
-print(f"Cost: {estimate['estimated_aet']} AET")
+print(f"Cost: {estimate['estimated_gcx']} GCX")
 print(f"Sufficient balance: {estimate['sufficient_balance']}")
 ```
 
@@ -213,7 +213,7 @@ try:
 except AuthenticationError:
     print("Invalid API key")
 except InsufficientCreditsError as e:
-    print(f"Need {e.required} AET, have {e.balance}")
+    print(f"Need {e.required} GCX, have {e.balance}")
 except RateLimitError as e:
     print(f"Rate limited. Retry after {e.retry_after}s")
 except TimeoutError as e:

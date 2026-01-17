@@ -512,7 +512,7 @@ components:
         cost:
           type: object
           properties:
-            estimated_aet:
+            estimated_gcx:
               type: integer
               example: 5
         created_at:
@@ -564,9 +564,9 @@ components:
         cost:
           type: object
           properties:
-            estimated_aet:
+            estimated_gcx:
               type: integer
-            charged_aet:
+            charged_gcx:
               type: integer
         created_at:
           type: string
@@ -590,7 +590,7 @@ components:
     CostEstimate:
       type: object
       properties:
-        estimated_aet:
+        estimated_gcx:
           type: integer
         breakdown:
           type: object
@@ -618,7 +618,7 @@ components:
         balance:
           type: object
           properties:
-            aet:
+            gcx:
               type: integer
             storage_used_bytes:
               type: integer
@@ -650,7 +650,7 @@ components:
               type: integer
             cancelled:
               type: integer
-        aet_spent:
+        gcx_spent:
           type: integer
 
     CreateWebhookRequest:
@@ -775,7 +775,7 @@ components:
           example:
             error:
               code: insufficient_credits
-              message: Account has 3 AET but operation requires 5 AET
+              message: Account has 3 GCX but operation requires 5 GCX
               balance: 3
               required: 5
 

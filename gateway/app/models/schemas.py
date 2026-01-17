@@ -94,9 +94,9 @@ class CreateJobRequest(BaseModel):
 class JobCost(BaseModel):
     """Job cost information."""
 
-    estimated_aet: int
-    charged_aet: int | None = None
-    refunded_aet: int | None = None
+    estimated_gcx: int
+    charged_gcx: int | None = None
+    refunded_gcx: int | None = None
 
 
 class JobLinks(BaseModel):
@@ -199,7 +199,7 @@ class ListJobsResponse(BaseModel):
 class AccountBalance(BaseModel):
     """Account balance information."""
 
-    aet: int
+    gcx: int
     storage_used_bytes: int
     storage_limit_bytes: int
 
@@ -244,8 +244,8 @@ class UsageStats(BaseModel):
     period_end: datetime
     jobs_created: int
     jobs_by_status: UsageByStatus
-    aet_spent: int
-    aet_by_operation: UsageByOperation
+    gcx_spent: int
+    gcx_by_operation: UsageByOperation
 
 
 # ============ Cost Estimation ============
@@ -262,7 +262,7 @@ class CostBreakdownItem(BaseModel):
 class CostEstimate(BaseModel):
     """Cost estimate response."""
 
-    estimated_aet: int
+    estimated_gcx: int
     breakdown: dict[str, CostBreakdownItem]
     current_balance: int
     sufficient_balance: bool

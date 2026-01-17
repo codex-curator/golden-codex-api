@@ -223,7 +223,7 @@ class GoldenCodex(BaseClient):
             ...     operations=["nova", "flux"],
             ...     options={"nova": {"tier": "full_gcx"}}
             ... )
-            >>> print(f"Cost: {estimate['estimated_aet']} AET")
+            >>> print(f"Cost: {estimate['estimated_gcx']} GCX")
         """
         return self._request(
             "POST",
@@ -649,7 +649,7 @@ class AccountAPI:
 
         Example:
             >>> account = gcx.account.get()
-            >>> print(f"Balance: {account['balance']['aet']} AET")
+            >>> print(f"Balance: {account['balance']['gcx']} GCX")
         """
         return self._client._request("GET", "/account")
 
@@ -658,7 +658,7 @@ class AccountAPI:
         Get usage statistics for the last 30 days.
 
         Returns:
-            Usage stats including jobs created and AET spent.
+            Usage stats including jobs created and GCX spent.
         """
         return self._client._request("GET", "/account/usage")
 

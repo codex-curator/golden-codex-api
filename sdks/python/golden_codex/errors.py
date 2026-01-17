@@ -52,7 +52,7 @@ class InsufficientCreditsError(APIError):
         self.required = required
 
     def __str__(self) -> str:
-        return f"Insufficient credits: have {self.balance} AET, need {self.required} AET"
+        return f"Insufficient credits: have {self.balance} GCX, need {self.required} GCX"
 
 
 class RateLimitError(APIError):

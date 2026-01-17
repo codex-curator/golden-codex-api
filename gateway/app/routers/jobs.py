@@ -54,7 +54,7 @@ async def create_job_endpoint(
         job_id=result["job_id"],
         status=JobStatus(result["status"]),
         operations=[Operation(op) for op in result["operations"]],
-        cost=JobCost(estimated_aet=result["cost"]["estimated_aet"]),
+        cost=JobCost(estimated_gcx=result["cost"]["estimated_gcx"]),
         created_at=result["created_at"],
         links=JobLinks(
             self=result["links"]["self"],

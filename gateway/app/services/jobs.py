@@ -72,7 +72,7 @@ async def create_job(
                 "job_id": existing["job_id"],
                 "status": existing["status"],
                 "operations": existing["operations"],
-                "cost": {"estimated_aet": existing["cost"]["estimated"]},
+                "cost": {"estimated_gcx": existing["cost"]["estimated"]},
                 "created_at": existing["created_at"],
                 "links": {
                     "self": f"/v1/jobs/{existing['job_id']}",
@@ -129,7 +129,7 @@ async def create_job(
         "job_id": job_id,
         "status": JobStatus.PENDING.value,
         "operations": [op.value for op in operations],
-        "cost": {"estimated_aet": total_cost},
+        "cost": {"estimated_gcx": total_cost},
         "created_at": now.isoformat(),
         "links": {
             "self": f"/v1/jobs/{job_id}",
@@ -457,9 +457,9 @@ def _transform_job(job_data: dict) -> Job:
         results=results,
         error=job_data.get("error"),
         cost=JobCost(
-            estimated_aet=cost_data.get("estimated", 0),
-            charged_aet=cost_data.get("charged"),
-            refunded_aet=cost_data.get("refunded"),
+            estimated_gcx=cost_data.get("estimated", 0),
+            charged_gcx=cost_data.get("charged"),
+            refunded_gcx=cost_data.get("refunded"),
         ),
         client_metadata=job_data.get("client_metadata"),
         created_at=job_data["created_at"],

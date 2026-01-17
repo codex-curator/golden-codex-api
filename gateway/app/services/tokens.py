@@ -123,7 +123,7 @@ def deduct_tokens(
                 detail={
                     "error": {
                         "code": "insufficient_credits",
-                        "message": f"Account has {current_balance} AET but operation requires {amount} AET",
+                        "message": f"Account has {current_balance} GCX but operation requires {amount} GCX",
                         "balance": current_balance,
                         "required": amount,
                     }

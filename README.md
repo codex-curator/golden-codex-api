@@ -116,11 +116,11 @@ curl -X POST https://api.golden-codex.com/v1/jobs \
 
 | Operation | Description | Cost |
 |-----------|-------------|------|
-| `nova` | AI metadata generation (standard) | 1 AET |
-| `nova` (full_gcx) | Museum-grade 50+ field analysis | 2 AET |
-| `flux` | 4x ESRGAN upscaling | 2 AET |
-| `atlas` | Metadata infusion into image file | 1 AET |
-| **Full Pipeline** | All operations | **5 AET** |
+| `nova` | AI metadata generation (standard) | 1 GCX |
+| `nova` (full_gcx) | Museum-grade 50+ field analysis | 2 GCX |
+| `flux` | 4x ESRGAN upscaling | 2 GCX |
+| `atlas` | Metadata infusion into image file | 1 GCX |
+| **Full Pipeline** | All operations | **5 GCX** |
 
 ### Nova: AI Metadata Enrichment
 
@@ -352,7 +352,7 @@ All errors follow a consistent format:
 {
   "error": {
     "code": "insufficient_credits",
-    "message": "Account has 3 AET but operation requires 5 AET",
+    "message": "Account has 3 GCX but operation requires 5 GCX",
     "balance": 3,
     "required": 5
   }
@@ -362,7 +362,7 @@ All errors follow a consistent format:
 | Code | HTTP | Description |
 |------|------|-------------|
 | `invalid_api_key` | 401 | API key is invalid or revoked |
-| `insufficient_credits` | 402 | Not enough AET balance |
+| `insufficient_credits` | 402 | Not enough GCX balance |
 | `rate_limited` | 429 | Too many requests |
 | `job_not_found` | 404 | Job ID doesn't exist |
 | `invalid_image_url` | 400 | Cannot fetch the image |

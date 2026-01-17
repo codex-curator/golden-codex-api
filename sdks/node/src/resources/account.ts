@@ -8,8 +8,8 @@ import type { GoldenCodex } from '../client';
  * Account balance information
  */
 export interface AccountBalance {
-  /** Current AET balance */
-  aet: number;
+  /** Current GCX balance */
+  gcx: number;
 
   /** Storage used in bytes */
   storageUsedBytes: number;
@@ -69,11 +69,11 @@ export interface UsageStats {
     cancelled: number;
   };
 
-  /** Total AET spent */
-  aetSpent: number;
+  /** Total GCX spent */
+  gcxSpent: number;
 
-  /** AET spent by operation */
-  aetByOperation: {
+  /** GCX spent by operation */
+  gcxByOperation: {
     nova: number;
     flux: number;
     atlas: number;
@@ -93,7 +93,7 @@ export class AccountAPI {
    * ```typescript
    * const account = await gcx.account.get();
    *
-   * console.log(`Balance: ${account.balance.aet} AET`);
+   * console.log(`Balance: ${account.balance.gcx} GCX`);
    * console.log(`Tier: ${account.tier}`);
    * console.log(`Rate limit: ${account.rateLimit.requestsPerMinute} req/min`);
    * ```
@@ -111,7 +111,7 @@ export class AccountAPI {
    * const usage = await gcx.account.usage();
    *
    * console.log(`Jobs created: ${usage.jobsCreated}`);
-   * console.log(`AET spent: ${usage.aetSpent}`);
+   * console.log(`GCX spent: ${usage.gcxSpent}`);
    * ```
    */
   async usage(): Promise<UsageStats> {
@@ -125,7 +125,7 @@ export class AccountAPI {
       email: raw.email,
       tier: raw.tier,
       balance: {
-        aet: raw.balance.aet,
+        gcx: raw.balance.gcx,
         storageUsedBytes: raw.balance.storage_used_bytes,
         storageLimitBytes: raw.balance.storage_limit_bytes,
       },
@@ -142,8 +142,8 @@ export class AccountAPI {
       periodEnd: raw.period_end,
       jobsCreated: raw.jobs_created,
       jobsByStatus: raw.jobs_by_status,
-      aetSpent: raw.aet_spent,
-      aetByOperation: raw.aet_by_operation,
+      gcxSpent: raw.gcx_spent,
+      gcxByOperation: raw.gcx_by_operation,
     };
   }
 }
@@ -155,7 +155,7 @@ interface RawAccount {
   email: string;
   tier: 'FREE_TRIAL' | 'CURATOR' | 'STUDIO' | 'GALLERY';
   balance: {
-    aet: number;
+    gcx: number;
     storage_used_bytes: number;
     storage_limit_bytes: number;
   };
@@ -174,8 +174,8 @@ interface RawUsageStats {
     failed: number;
     cancelled: number;
   };
-  aet_spent: number;
-  aet_by_operation: {
+  gcx_spent: number;
+  gcx_by_operation: {
     nova: number;
     flux: number;
     atlas: number;

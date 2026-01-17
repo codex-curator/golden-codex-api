@@ -53,7 +53,7 @@ export class AuthenticationError extends APIError {
  * Error thrown when the account has insufficient credits (402)
  */
 export class InsufficientCreditsError extends APIError {
-  /** Current account balance in AET */
+  /** Current account balance in GCX */
   public readonly balance: number;
 
   /** Required balance for the operation */

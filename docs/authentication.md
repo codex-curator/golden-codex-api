@@ -138,7 +138,7 @@ HTTP 401 Unauthorized
 
 API keys are linked to your Golden Codex account. All operations:
 
-- Use your account's AET balance
+- Use your account's GCX balance
 - Count toward your rate limits
 - Appear in your usage dashboard
 

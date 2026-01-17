@@ -105,7 +105,7 @@ await gcx.jobs.cancel('job_abc123');
 ```typescript
 // Get account info
 const account = await gcx.account.get();
-console.log(`Balance: ${account.balance.aet} AET`);
+console.log(`Balance: ${account.balance.gcx} GCX`);
 console.log(`Tier: ${account.tier}`);
 
 // Get usage statistics
@@ -123,7 +123,7 @@ const estimate = await gcx.estimate({
   }
 });
 
-console.log(`Cost: ${estimate.estimatedAet} AET`);
+console.log(`Cost: ${estimate.estimatedAet} GCX`);
 console.log(`Sufficient balance: ${estimate.sufficientBalance}`);
 ```
 
@@ -205,7 +205,7 @@ try {
   if (error instanceof AuthenticationError) {
     console.error('Invalid API key');
   } else if (error instanceof InsufficientCreditsError) {
-    console.error(`Need ${error.required} AET, have ${error.balance}`);
+    console.error(`Need ${error.required} GCX, have ${error.balance}`);
   } else if (error instanceof RateLimitError) {
     console.error(`Rate limited. Retry after ${error.retryAfter}s`);
   } else if (error instanceof TimeoutError) {

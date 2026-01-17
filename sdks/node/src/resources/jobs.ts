@@ -125,7 +125,7 @@ export interface CreateJobResponse {
 
   /** Estimated cost */
   cost: {
-    estimatedAet: number;
+    estimatedGcx: number;
   };
 
   /** When the job was created */
@@ -379,9 +379,9 @@ export class JobsAPI {
       } : undefined,
       error: raw.error,
       cost: {
-        estimatedAet: raw.cost?.estimated_aet ?? raw.cost?.estimated ?? 0,
-        chargedAet: raw.cost?.charged_aet ?? raw.cost?.charged,
-        refundedAet: raw.cost?.refunded_aet ?? raw.cost?.refunded,
+        estimatedGcx: raw.cost?.estimated_gcx ?? raw.cost?.estimated ?? 0,
+        chargedGcx: raw.cost?.charged_gcx ?? raw.cost?.charged,
+        refundedGcx: raw.cost?.refunded_gcx ?? raw.cost?.refunded,
       },
       clientMetadata: raw.client_metadata,
       createdAt: raw.created_at,
@@ -396,7 +396,7 @@ export class JobsAPI {
       status: raw.status,
       operations: raw.operations,
       cost: {
-        estimatedAet: raw.cost?.estimated_aet ?? raw.cost?.estimated ?? 0,
+        estimatedGcx: raw.cost?.estimated_gcx ?? raw.cost?.estimated ?? 0,
       },
       createdAt: raw.created_at,
       links: raw.links,
@@ -434,11 +434,11 @@ interface RawJob {
   error?: ErrorDetails;
   cost?: {
     estimated?: number;
-    estimated_aet?: number;
+    estimated_gcx?: number;
     charged?: number;
-    charged_aet?: number;
+    charged_gcx?: number;
     refunded?: number;
-    refunded_aet?: number;
+    refunded_gcx?: number;
   };
   client_metadata?: Record<string, unknown>;
   created_at: string;
@@ -452,7 +452,7 @@ interface RawCreateJobResponse {
   operations: Operation[];
   cost?: {
     estimated?: number;
-    estimated_aet?: number;
+    estimated_gcx?: number;
   };
   created_at: string;
   links: {

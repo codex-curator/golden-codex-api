@@ -54,7 +54,7 @@ async def get_account_endpoint(
         email=user_data.get("email", ""),
         tier=auth.tier,
         balance=AccountBalance(
-            aet=int(balance),
+            gcx=int(balance),
             storage_used_bytes=storage_used,
             storage_limit_bytes=storage_limit,
         ),
@@ -99,10 +99,10 @@ async def get_usage_endpoint(
     completed = 0
     failed = 0
     cancelled = 0
-    aet_spent = 0
-    aet_nova = 0
-    aet_flux = 0
-    aet_atlas = 0
+    gcx_spent = 0
+    gcx_nova = 0
+    gcx_flux = 0
+    gcx_atlas = 0
 
     for job_doc in jobs:
         job = job_doc.to_dict()
@@ -119,16 +119,16 @@ async def get_usage_endpoint(
         charged = cost.get("charged", 0)
         refunded = cost.get("refunded", 0)
         net_cost = charged - refunded
-        aet_spent += net_cost
+        gcx_spent += net_cost
 
         # Estimate per-operation costs (simplified)
         operations = job.get("operations", [])
         if "nova" in operations:
-            aet_nova += 2
+            gcx_nova += 2
         if "flux" in operations:
-            aet_flux += 2
+            gcx_flux += 2
         if "atlas" in operations:
-            aet_atlas += 1
+            gcx_atlas += 1
 
     return UsageStats(
         period_start=period_start,
@@ -139,10 +139,10 @@ async def get_usage_endpoint(
             failed=failed,
             cancelled=cancelled,
         ),
-        aet_spent=aet_spent,
-        aet_by_operation=UsageByOperation(
-            nova=aet_nova,
-            flux=aet_flux,
-            atlas=aet_atlas,
+        gcx_spent=gcx_spent,
+        gcx_by_operation=UsageByOperation(
+            nova=gcx_nova,
+            flux=gcx_flux,
+            atlas=gcx_atlas,
         ),
     )

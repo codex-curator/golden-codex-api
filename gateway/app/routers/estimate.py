@@ -33,7 +33,7 @@ async def estimate_cost_endpoint(
     }
 
     return CostEstimate(
-        estimated_aet=total_cost,
+        estimated_gcx=total_cost,
         breakdown=breakdown_items,
         current_balance=auth.balance,
         sufficient_balance=auth.balance >= total_cost,

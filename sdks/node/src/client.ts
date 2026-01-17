@@ -122,7 +122,7 @@ export class GoldenCodex {
    *   }
    * });
    *
-   * console.log(`Cost: ${estimate.estimatedAet} AET`);
+   * console.log(`Cost: ${estimate.estimatedGcx} GCX`);
    * console.log(`Sufficient balance: ${estimate.sufficientBalance}`);
    * ```
    */

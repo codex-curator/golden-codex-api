@@ -52,7 +52,7 @@ async function enhanceImage() {
   });
 
   console.log(`Job created: ${job.jobId}`);
-  console.log(`Estimated cost: ${job.cost.estimatedAet} AET`);
+  console.log(`Estimated cost: ${job.cost.estimatedAet} GCX`);
 
   // Wait for completion (polls automatically)
   const result = await gcx.jobs.wait(job.jobId);
@@ -80,7 +80,7 @@ job = gcx.jobs.create(
 )
 
 print(f"Job created: {job['job_id']}")
-print(f"Estimated cost: {job['cost']['estimated_aet']} AET")
+print(f"Estimated cost: {job['cost']['estimated_gcx']} GCX")
 
 # Wait for completion
 result = gcx.jobs.wait(job["job_id"])
@@ -122,9 +122,9 @@ A completed job returns rich results:
 
 | Operation | What It Does | Cost |
 |-----------|-------------|------|
-| `nova` | AI analyzes image and generates 50+ metadata fields | 1-2 AET |
-| `flux` | Upscales image 2-4x using ESRGAN | 1-2 AET |
-| `atlas` | Embeds metadata into image file (XMP/EXIF) | 1 AET |
+| `nova` | AI analyzes image and generates 50+ metadata fields | 1-2 GCX |
+| `flux` | Upscales image 2-4x using ESRGAN | 1-2 GCX |
+| `atlas` | Embeds metadata into image file (XMP/EXIF) | 1 GCX |
 
 You can run any combination:
 
