@@ -1,5 +1,6 @@
 """Job management service."""
 
+import asyncio
 import uuid
 from datetime import datetime, timedelta
 from typing import Any
@@ -269,8 +270,10 @@ async def trigger_pipeline(
     """
     Trigger the enhancement pipeline.
 
-    This is a simplified implementation that calls agents directly.
-    In production, consider using Cloud Tasks for reliability.
+    Mirrors the Studio flow:
+    1. Nova + Flux run in PARALLEL (both receive original image)
+    2. Atlas runs AFTER both complete (receives upscaled image + golden codex)
+    3. Atlas handles: metadata infusion, Soulmark, hash registration, Arweave
     """
     settings = get_settings()
     db = get_db()
@@ -286,64 +289,105 @@ async def trigger_pipeline(
         results: dict[str, Any] = {
             "urls": {"original": image_url},
         }
-        current_image_url = image_url
+
+        # Map Flux model shorthand to ESRGAN model names
+        flux_model_map = {
+            "2x": "realesrgan_x2plus",
+            "4x": "realesrgan_x4plus",
+            "anime": "realesrgan_x4plus_anime",
+            "photo": "realesrgan_x4plus",
+        }
 
         async with httpx.AsyncClient(timeout=300.0) as client:
-            # Nova - AI Metadata
-            if Operation.NOVA in operations:
-                job_ref.update({"progress.nova": JobStatus.PROCESSING.value})
+            # ============================================================
+            # PARALLEL PHASE: Nova + Flux run simultaneously
+            # Both receive the ORIGINAL image URL
+            # ============================================================
+            parallel_tasks = []
 
+            # Nova task
+            async def run_nova():
+                job_ref.update({"progress.nova": JobStatus.PROCESSING.value})
                 nova_options = options.nova if options else None
                 nova_response = await client.post(
                     f"{settings.nova_agent_url}/enrich",
                     json={
-                        "image_url": current_image_url,
+                        "image_url": image_url,
                         "user_id": user_id,
                         "job_id": job_id,
                         "parameters": {
                             "analysis_depth": "full" if nova_options and nova_options.tier == "full_gcx" else "standard",
                             "metadata_tier": nova_options.tier if nova_options else "standard",
+                            "content_type": "artwork",
                         },
                     },
                 )
                 nova_response.raise_for_status()
                 nova_data = nova_response.json()
-                results["golden_codex"] = nova_data.get("golden_codex", {})
                 job_ref.update({"progress.nova": JobStatus.COMPLETED.value})
+                return {"type": "nova", "data": nova_data}
 
-            # Flux - Upscaling
-            if Operation.FLUX in operations:
+            # Flux task
+            async def run_flux():
                 job_ref.update({"progress.flux": JobStatus.PROCESSING.value})
-
                 flux_options = options.flux if options else None
+                model_key = flux_options.model if flux_options else "2x"
+                esrgan_model = flux_model_map.get(model_key, "realesrgan_x2plus")
                 flux_response = await client.post(
                     f"{settings.flux_agent_url}/upscale",
                     json={
-                        "image_url": current_image_url,
+                        "image_url": image_url,
                         "user_id": user_id,
                         "job_id": job_id,
                         "parameters": {
-                            "model": flux_options.model if flux_options else "4x",
+                            "model": esrgan_model,
                         },
                     },
                 )
                 flux_response.raise_for_status()
                 flux_data = flux_response.json()
-                upscaled_url = flux_data.get("upscaled_image_url")
-                if upscaled_url:
-                    results["urls"]["upscaled"] = upscaled_url
-                    current_image_url = upscaled_url
                 job_ref.update({"progress.flux": JobStatus.COMPLETED.value})
+                return {"type": "flux", "data": flux_data}
 
-            # Atlas - Metadata Infusion
+            # Launch parallel tasks based on requested operations
+            if Operation.NOVA in operations:
+                parallel_tasks.append(run_nova())
+            if Operation.FLUX in operations:
+                parallel_tasks.append(run_flux())
+
+            # Wait for all parallel tasks to complete
+            if parallel_tasks:
+                parallel_results = await asyncio.gather(*parallel_tasks, return_exceptions=True)
+
+                for result in parallel_results:
+                    if isinstance(result, Exception):
+                        raise result
+                    if result["type"] == "nova":
+                        results["golden_codex"] = result["data"].get("golden_codex", {})
+                    elif result["type"] == "flux":
+                        upscaled_url = result["data"].get("upscaled_image_url")
+                        if upscaled_url:
+                            results["urls"]["upscaled"] = upscaled_url
+
+            # ============================================================
+            # SEQUENTIAL PHASE: Atlas runs after Nova + Flux complete
+            # Receives upscaled image + golden codex for full treatment:
+            # - ExifTool metadata infusion (standard + full_gcx payload)
+            # - Soulmark generation (SHA-256 of canonical codex)
+            # - Hash registration (perceptual hash + LSH indexing)
+            # - Arweave permanent storage
+            # ============================================================
             if Operation.ATLAS in operations:
                 job_ref.update({"progress.atlas": JobStatus.PROCESSING.value})
 
+                # Atlas gets the upscaled image (if available), otherwise original
+                atlas_image_url = results["urls"].get("upscaled", image_url)
                 atlas_options = options.atlas if options else None
+
                 atlas_response = await client.post(
                     f"{settings.atlas_agent_url}/infuse",
                     json={
-                        "image_url": current_image_url,
+                        "image_url": atlas_image_url,
                         "user_id": user_id,
                         "job_id": job_id,
                         "golden_codex": results.get("golden_codex", {}),
@@ -353,9 +397,22 @@ async def trigger_pipeline(
                 )
                 atlas_response.raise_for_status()
                 atlas_data = atlas_response.json()
+
+                # Capture Atlas outputs
                 final_url = atlas_data.get("final_url")
                 if final_url:
                     results["urls"]["final"] = final_url
+                if atlas_data.get("soulmark"):
+                    results["soulmark"] = atlas_data["soulmark"]
+                if atlas_data.get("uuid"):
+                    results["uuid"] = atlas_data["uuid"]
+                if atlas_data.get("perceptual_hash"):
+                    results["perceptual_hash"] = atlas_data["perceptual_hash"]
+                if atlas_data.get("arweave"):
+                    results["arweave"] = atlas_data["arweave"]
+                if atlas_data.get("artifact_id"):
+                    results["artwork_id"] = atlas_data["artifact_id"]
+
                 job_ref.update({"progress.atlas": JobStatus.COMPLETED.value})
 
         # Job completed successfully

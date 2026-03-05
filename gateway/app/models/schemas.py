@@ -58,7 +58,7 @@ class NovaOptions(BaseModel):
 class FluxOptions(BaseModel):
     """Options for Flux upscaling."""
 
-    model: Literal["2x", "4x", "anime", "photo"] = "4x"
+    model: Literal["2x", "4x", "anime", "photo"] = "2x"
 
 
 class AtlasOptions(BaseModel):
