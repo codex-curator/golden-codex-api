@@ -136,10 +136,11 @@ class JobUrls(BaseModel):
     original: str
     upscaled: str | None = None
     final: str | None = None
+    codex_json: str | None = Field(default=None, description="Download URL for the Golden Codex JSON")
 
 
 class GoldenCodexMetadata(BaseModel):
-    """Simplified Golden Codex metadata structure."""
+    """Golden Codex metadata structure."""
 
     title: str | None = None
     artist_interpretation: str | None = None
@@ -150,12 +151,23 @@ class GoldenCodexMetadata(BaseModel):
         extra = "allow"
 
 
+class ProvenanceInfo(BaseModel):
+    """Provenance and verification data from Atlas."""
+
+    soulmark: str | None = Field(default=None, description="SHA-256 hash of canonical codex JSON")
+    perceptual_hash: str | None = Field(default=None, description="Perceptual hash for visual matching")
+    arweave_tx: str | None = Field(default=None, description="Arweave transaction ID for permanent storage")
+    arweave_url: str | None = Field(default=None, description="Arweave gateway URL")
+    uuid: str | None = Field(default=None, description="Unique identifier for the artifact")
+
+
 class JobResults(BaseModel):
     """Results from a completed job."""
 
     golden_codex: GoldenCodexMetadata | None = None
     urls: JobUrls | None = None
     artwork_id: str | None = None
+    provenance: ProvenanceInfo | None = None
 
 
 class JobError(BaseModel):

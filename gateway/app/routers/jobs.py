@@ -121,6 +121,48 @@ async def get_job_endpoint(
     return job
 
 
+@router.get(
+    "/{job_id}/codex",
+    summary="Download Golden Codex JSON",
+    description="Returns the Golden Codex metadata as a downloadable JSON object.",
+)
+async def get_job_codex_endpoint(
+    request: Request,
+    response: Response,
+    job_id: str,
+    auth: RateLimitedAuth,
+):
+    """Get the Golden Codex JSON for a completed job."""
+    add_rate_limit_headers(response, request)
+
+    job = await get_job(job_id, auth.user_id)
+
+    if not job:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"error": {"code": "job_not_found", "message": f"Job {job_id} not found"}},
+        )
+
+    if job.status != JobStatus.COMPLETED:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={"error": {"code": "job_not_complete", "message": f"Job {job_id} is {job.status.value}"}},
+        )
+
+    if not job.results or not job.results.golden_codex:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"error": {"code": "no_codex", "message": "No Golden Codex metadata available"}},
+        )
+
+    return {
+        "job_id": job_id,
+        "golden_codex": job.results.golden_codex,
+        "provenance": job.results.provenance,
+        "urls": job.results.urls,
+    }
+
+
 @router.delete(
     "/{job_id}",
     status_code=status.HTTP_204_NO_CONTENT,

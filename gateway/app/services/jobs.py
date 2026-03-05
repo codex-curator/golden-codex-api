@@ -19,6 +19,7 @@ from ..models import (
     Operation,
     OperationOptions,
     Pagination,
+    ProvenanceInfo,
 )
 from .auth import get_db
 from .tokens import calculate_cost, deduct_tokens, refund_tokens
@@ -376,6 +377,10 @@ async def trigger_pipeline(
                         raise result
                     if result["type"] == "nova":
                         results["golden_codex"] = result["data"].get("golden_codex", {})
+                        # Capture codex JSON URL if Nova provides one
+                        codex_json_url = result["data"].get("codex_json_url") or result["data"].get("metadata_url")
+                        if codex_json_url:
+                            results["urls"]["codex_json"] = codex_json_url
                     elif result["type"] == "flux":
                         upscaled_url = result["data"].get("upscaled_image_url")
                         if upscaled_url:
@@ -510,10 +515,22 @@ def _transform_job(job_data: dict) -> Job:
     results = None
     if job_data.get("results"):
         r = job_data["results"]
+        # Build provenance info from Atlas outputs
+        provenance = None
+        if any(r.get(k) for k in ("soulmark", "perceptual_hash", "arweave", "uuid")):
+            arweave_data = r.get("arweave", {})
+            provenance = ProvenanceInfo(
+                soulmark=r.get("soulmark"),
+                perceptual_hash=r.get("perceptual_hash"),
+                arweave_tx=arweave_data.get("tx_id") if isinstance(arweave_data, dict) else None,
+                arweave_url=arweave_data.get("url") if isinstance(arweave_data, dict) else None,
+                uuid=r.get("uuid"),
+            )
         results = JobResults(
             golden_codex=r.get("golden_codex"),
             urls=JobUrls(**r["urls"]) if r.get("urls") else None,
             artwork_id=r.get("artwork_id"),
+            provenance=provenance,
         )
 
     cost_data = job_data.get("cost", {})
