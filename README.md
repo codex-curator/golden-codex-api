@@ -45,7 +45,11 @@ Perfect for:
 
 ### 1. Get your API key
 
-Sign up at [golden-codex.com](https://golden-codex.com) and generate an API key from your dashboard.
+1. Sign up at [golden-codex.com](https://golden-codex.com)
+2. Open **Studio** → click **Settings** (gear icon, top-right) → **API** tab
+3. Click **"Create New Key"**, give it a name, and copy the key immediately (it's shown only once)
+
+Your key will look like: `gcx_live_aBcDeFgHiJkLmNoPqRsTuVwXyZ012345`
 
 ### 2. Install an SDK
 
@@ -101,7 +105,8 @@ print("Final image:", result["results"]["urls"]["final"])
 
 **cURL:**
 ```bash
-curl -X POST https://api.golden-codex.com/v1/jobs \
+# Using the direct endpoint (beta)
+curl -X POST https://api-gateway-172867820131.us-west1.run.app/v1/jobs \
   -H "Authorization: Bearer gcx_live_your_key_here" \
   -H "Content-Type: application/json" \
   -d '{
@@ -188,6 +193,9 @@ Embeds the Golden Codex metadata directly into the image file using XMP standard
 ```
 https://api.golden-codex.com/v1
 ```
+
+> **Note**: During beta, you can also use the direct Cloud Run URL:
+> `https://api-gateway-172867820131.us-west1.run.app/v1`
 
 ### Authentication
 
