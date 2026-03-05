@@ -38,11 +38,10 @@ async def get_account_endpoint(
     user_doc = db.collection("users").document(auth.user_id).get()
     user_data = user_doc.to_dict() if user_doc.exists else {}
 
-    # Get balance
-    tokens = user_data.get("tokens", {})
-    balance = tokens.get("balance", 0)
-    if balance == 0:
-        balance = user_data.get("credits_available", 0)
+    # Get balance — use whichever is larger (credits_available is primary)
+    credits_available = int(user_data.get("credits_available", 0))
+    tokens_balance = int(user_data.get("tokens", {}).get("balance", 0))
+    balance = max(credits_available, tokens_balance)
 
     # Get storage
     storage = user_data.get("storage", {})

@@ -124,8 +124,11 @@ async def create_job(
 
     db.collection("api_jobs").document(job_id).set(job_data)
 
-    # Trigger pipeline asynchronously
-    await trigger_pipeline(job_id, str(image_url), operations, options, user_id, client_metadata)
+    # Fire-and-forget: launch pipeline in background task
+    # Response returns immediately with job_id; client polls for results
+    asyncio.create_task(
+        trigger_pipeline(job_id, str(image_url), operations, options, user_id, client_metadata)
+    )
 
     return {
         "job_id": job_id,

@@ -61,12 +61,13 @@ def check_balance(user_id: str, required: int) -> tuple[bool, int]:
         return False, 0
 
     user_data = user_doc.to_dict()
-    tokens = user_data.get("tokens", {})
-    balance = tokens.get("balance", 0)
 
-    # Also check credits_available for backward compatibility
-    if balance == 0:
-        balance = user_data.get("credits_available", 0)
+    # credits_available is the primary balance (set by website/Stripe)
+    # tokens.balance is the API-tracked balance (legacy)
+    # Use whichever is larger — they represent the same pool
+    credits_available = user_data.get("credits_available", 0)
+    tokens_balance = user_data.get("tokens", {}).get("balance", 0)
+    balance = max(int(credits_available), int(tokens_balance))
 
     return balance >= required, int(balance)
 
@@ -110,12 +111,11 @@ def deduct_tokens(
             )
 
         user_data = user_snapshot.to_dict()
-        tokens = user_data.get("tokens", {})
-        current_balance = tokens.get("balance", 0)
 
-        # Also check credits_available
-        if current_balance == 0:
-            current_balance = user_data.get("credits_available", 0)
+        # Use credits_available as primary, tokens.balance as fallback
+        credits_available = int(user_data.get("credits_available", 0))
+        tokens_balance = int(user_data.get("tokens", {}).get("balance", 0))
+        current_balance = max(credits_available, tokens_balance)
 
         if current_balance < amount:
             raise HTTPException(
@@ -132,8 +132,9 @@ def deduct_tokens(
 
         new_balance = current_balance - amount
 
-        # Update balance
+        # Update both balance fields to keep them in sync
         transaction.update(user_ref, {
+            "credits_available": new_balance,
             "tokens.balance": new_balance,
             "tokens.totalSpent": firestore.Increment(amount),
         })
@@ -179,13 +180,15 @@ def refund_tokens(
             return 0
 
         user_data = user_snapshot.to_dict()
-        tokens = user_data.get("tokens", {})
-        current_balance = tokens.get("balance", 0)
+        credits_available = int(user_data.get("credits_available", 0))
+        tokens_balance = int(user_data.get("tokens", {}).get("balance", 0))
+        current_balance = max(credits_available, tokens_balance)
 
         new_balance = current_balance + amount
 
-        # Update balance
+        # Update both balance fields to keep them in sync
         transaction.update(user_ref, {
+            "credits_available": new_balance,
             "tokens.balance": new_balance,
             "tokens.totalSpent": firestore.Increment(-amount),
         })

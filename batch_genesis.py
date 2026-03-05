@@ -17,15 +17,16 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from urllib.parse import quote
 
+import subprocess
+
 import requests
-from google.cloud import storage
 
 # ============ Configuration ============
 
 API_URL = "https://api-gateway-172867820131.us-west1.run.app/v1"
 API_KEY = os.environ.get("GCX_API_KEY", "gcx_live_VUYASdHPY9UNqmqQyAqEevBvyGNz6OHj")
-GCS_BUCKET = "codex-intake-bucket"
-GCS_PREFIX = "genesis-collection"
+GCS_BUCKET = "codex-public-assets"
+GCS_PREFIX = "genesis-intake"
 INTAKE_DIR = Path("/mnt/d/GALLERY/INTAKE - PROCESS")
 OUTPUT_DIR = Path("/mnt/d/GALLERY/GENESIS_RESULTS")
 POLL_INTERVAL = 10  # seconds
@@ -48,22 +49,51 @@ HEADERS = {
 }
 
 
-def upload_to_gcs(local_path: Path, bucket_name: str, prefix: str) -> str:
-    """Upload a file to GCS and return its gs:// URL."""
-    client = storage.Client(project="the-golden-codex-1111")
-    bucket = client.bucket(bucket_name)
-    blob_name = f"{prefix}/{local_path.name}"
-    blob = bucket.blob(blob_name)
+def sanitize_filename(name: str) -> str:
+    """Remove spaces and special chars that break GCS path handling."""
+    import re
+    # Replace spaces and problematic chars with underscores
+    name = name.replace(" - Copy", "")
+    name = name.replace(" ", "_")
+    name = re.sub(r'[·\(\)\[\]{}]', '', name)
+    # Collapse multiple underscores
+    name = re.sub(r'_+', '_', name)
+    return name
 
-    if blob.exists():
+
+def upload_to_gcs(local_path: Path, bucket_name: str, prefix: str) -> str:
+    """Upload a file to GCS using gsutil and return its public URL."""
+    from urllib.parse import quote as url_quote
+
+    safe_name = sanitize_filename(local_path.name)
+    blob_name = f"{prefix}/{safe_name}"
+    gs_uri = f"gs://{bucket_name}/{blob_name}"
+    public_url = f"https://storage.googleapis.com/{bucket_name}/{url_quote(blob_name)}"
+
+    # Check if already uploaded
+    check = subprocess.run(
+        ["gsutil", "stat", gs_uri],
+        capture_output=True, text=True
+    )
+    if check.returncode == 0:
         print(f"  [skip] Already uploaded: {blob_name}")
     else:
-        blob.upload_from_filename(str(local_path))
-        print(f"  [upload] {local_path.name} -> gs://{bucket_name}/{blob_name}")
+        # Upload
+        result = subprocess.run(
+            ["gsutil", "cp", str(local_path), gs_uri],
+            capture_output=True, text=True
+        )
+        if result.returncode != 0:
+            raise RuntimeError(f"Upload failed: {result.stderr}")
+        print(f"  [upload] {local_path.name} -> {gs_uri}")
 
-    # Make publicly readable (for the API to fetch)
-    blob.make_public()
-    return blob.public_url
+        # Make publicly readable
+        subprocess.run(
+            ["gsutil", "acl", "ch", "-u", "AllUsers:R", gs_uri],
+            capture_output=True, text=True
+        )
+
+    return public_url
 
 
 def create_job(image_url: str, filename: str) -> dict:
@@ -87,7 +117,7 @@ def create_job(image_url: str, filename: str) -> dict:
         },
     }
 
-    resp = requests.post(f"{API_URL}/jobs", headers=HEADERS, json=payload, timeout=30)
+    resp = requests.post(f"{API_URL}/jobs", headers=HEADERS, json=payload, timeout=60)
     resp.raise_for_status()
     return resp.json()
 
