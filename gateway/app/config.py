@@ -32,7 +32,7 @@ class Settings(BaseSettings):
     # Token costs
     cost_nova_standard: int = 1
     cost_nova_full: int = 2
-    cost_flux_2x: int = 1
+    cost_flux_2x: int = 2
     cost_flux_4x: int = 2
     cost_atlas: int = 1
 

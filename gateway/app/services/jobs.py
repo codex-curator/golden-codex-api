@@ -124,7 +124,7 @@ async def create_job(
     db.collection("api_jobs").document(job_id).set(job_data)
 
     # Trigger pipeline asynchronously
-    await trigger_pipeline(job_id, str(image_url), operations, options, user_id)
+    await trigger_pipeline(job_id, str(image_url), operations, options, user_id, client_metadata)
 
     return {
         "job_id": job_id,
@@ -266,6 +266,7 @@ async def trigger_pipeline(
     operations: list[Operation],
     options: OperationOptions | None,
     user_id: str,
+    client_metadata: dict[str, Any] | None = None,
 ) -> None:
     """
     Trigger the enhancement pipeline.
@@ -309,18 +310,29 @@ async def trigger_pipeline(
             async def run_nova():
                 job_ref.update({"progress.nova": JobStatus.PROCESSING.value})
                 nova_options = options.nova if options else None
+                nova_payload = {
+                    "image_url": image_url,
+                    "user_id": user_id,
+                    "job_id": job_id,
+                    "parameters": {
+                        "analysis_depth": "full" if nova_options and nova_options.tier == "full_gcx" else "standard",
+                        "metadata_tier": nova_options.tier if nova_options else "standard",
+                        "content_type": "artwork",
+                    },
+                }
+                # Pass custom instructions and client_metadata as user_metadata
+                # Nova reads user_metadata for artist, collection, and prompt context
+                user_metadata = {}
+                if nova_options and nova_options.instructions:
+                    user_metadata["instructions"] = nova_options.instructions
+                if client_metadata:
+                    user_metadata.update(client_metadata)
+                if user_metadata:
+                    nova_payload["user_metadata"] = user_metadata
+
                 nova_response = await client.post(
                     f"{settings.nova_agent_url}/enrich",
-                    json={
-                        "image_url": image_url,
-                        "user_id": user_id,
-                        "job_id": job_id,
-                        "parameters": {
-                            "analysis_depth": "full" if nova_options and nova_options.tier == "full_gcx" else "standard",
-                            "metadata_tier": nova_options.tier if nova_options else "standard",
-                            "content_type": "artwork",
-                        },
-                    },
+                    json=nova_payload,
                 )
                 nova_response.raise_for_status()
                 nova_data = nova_response.json()

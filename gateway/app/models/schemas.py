@@ -53,6 +53,11 @@ class NovaOptions(BaseModel):
 
     tier: Literal["standard", "full_gcx"] = "standard"
     language: str = "en"
+    instructions: str | None = Field(
+        default=None,
+        max_length=2000,
+        description="Custom instructions for the AI oracle. Use to specify artist, collection, context, or override fields like soul_whisper.",
+    )
 
 
 class FluxOptions(BaseModel):
